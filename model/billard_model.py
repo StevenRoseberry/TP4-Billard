@@ -73,6 +73,8 @@ class BillardModel:
         start_x = self.width * 0.75
         start_y = self.height / 2
 
+
+        #Les boules de jeux ont été généré avec Gemini, sinon c'était répétitif
         # Configuration pyramidale (1, 2, 3, 4, 5 balles)
         rows = 5
         offset_x = self.ball_radius * 1.75  # Espacement horizontal (un peu serré)
