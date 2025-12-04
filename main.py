@@ -1,8 +1,4 @@
-#!/usr/bin/env python3
-"""
-Jeu de Billard avec Pymunk et PyQt6
-Architecture MVC - Rendu avec QPainter uniquement
-"""
+
 import sys
 from PyQt6.QtWidgets import QApplication
 from model.billard_model import BillardModel
