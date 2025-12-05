@@ -5,6 +5,9 @@ import math
 import random
 
 
+# TODO : https://github.com/iwarshavsky/Pool-Simulation/blob/main/utils/ball.py
+# Mettre la bonne physique
+
 @dataclass
 class BallState:
     position: Tuple[float, float]
@@ -13,13 +16,13 @@ class BallState:
 
 
 class BillardModel:
-    def __init__(self, width: int = 1200, height: int = 600):
+    def __init__(self, width: int = 1600, height: int = 800):
         self.width = width
         self.height = height
 
         self.space = pymunk.Space()
         self.space.gravity = (0, 0)
-        self.space.damping = 0.98  # Un peu plus de friction pour le réalisme
+        self.space.damping = 0.80  # Un peu plus de friction pour le réalisme
 
         self.ball_radius = 15
         self.cue_length = 200
@@ -46,7 +49,7 @@ class BillardModel:
         # Les murs physiques sont placés exactement sur les bords
         # L'épaisseur (radius=20) repousse la balle vers l'intérieur
         # Inner-bound = Coordinate +/- radius
-        thickness = 40  # Épaisseur physique du mur
+        thickness = 40 # Épaisseur physique du mur
 
         # Le rectangle de jeu visible sera de (40, 40) à (W-40, H-40)
         # Mur Gauche
