@@ -35,6 +35,8 @@ class BillardModel(QObject):
     power = 0
     cue_distance = 100
 
+    #elements du graph
+
     def __init__(self, width: int = 1600, height: int = 800):
         self.width = width
         self.height = height
@@ -224,3 +226,5 @@ class BillardModel(QObject):
         end_x = start_x - self.cue_length * math.cos(self.cue_angle)
         end_y = start_y - self.cue_length * math.sin(self.cue_angle)
         return ((start_x, start_y), (end_x, end_y))
+
+

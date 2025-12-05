@@ -1,10 +1,15 @@
 import sys
 import math
+from typing import TYPE_CHECKING
+
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QSizePolicy
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal, QPointF
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush
 from PyQt6.uic import loadUi
 import pymunk
+
+if TYPE_CHECKING:
+    from controller.main_controller import MainController
 
 
 class PymunkWidget(QWidget):
@@ -13,6 +18,9 @@ class PymunkWidget(QWidget):
     mouse_pressed = pyqtSignal()
     mouse_released = pyqtSignal()
     lock_toggled = pyqtSignal()
+
+    if TYPE_CHECKING:
+        controller: MainController | None
 
     def __init__(self, width, height, parent=None):
         super().__init__(parent)
@@ -32,6 +40,9 @@ class PymunkWidget(QWidget):
 
         self.setMouseTracking(True)
         self.mouse_pressed_flag = False
+
+    def set_controller(self,controller):
+        self.controller = controller
 
     def set_model(self, model):
         self.model = model
