@@ -35,7 +35,6 @@ class MainController:
         pass
 
     def on_toggle_lock(self):
-        """Action déclenchée par le clic droit"""
         self.model.toggle_cue_lock()
 
     def set_power(self, power: float):

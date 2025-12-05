@@ -12,6 +12,8 @@ class BallState:
     angular_velocity: float
 
 
+# La physique des boules a été adapté par Gemini à l'aide d'un projet de billard déjà fait sur Github :
+# Source : https://github.com/iwarshavsky/Pool-Simulation/blob/main/utils/ball.py
 class BillardModel:
     def __init__(self, width: int = 1600, height: int = 800):
         self.width = width
@@ -20,8 +22,7 @@ class BillardModel:
         self.space = pymunk.Space()
         self.space.gravity = (0, 0)
 
-        # CHANGEMENT MAJEUR 1: On enlève le damping global (air)
-        # On le met à 1.0 ou très proche, car le PivotJoint va gérer le freinage
+        # 1.0 ou très proche, car le PivotJoint va gérer le freinage
         self.space.damping = 1.0
 
         # Paramètres pour que les boules s'arrêtent net quand elles sont très lentes
@@ -95,7 +96,6 @@ class BillardModel:
                 self._create_single_ball((x, y), color)
 
     def _create_single_ball(self, position, color_rgb):
-        # CHANGEMENT MAJEUR 2: Physique de la boule inspirée de "Source A"
         mass = 3  # Masse plus lourde comme dans ton exemple
         moment = pymunk.moment_for_circle(mass, 0, self.ball_radius)
         body = pymunk.Body(mass, moment)
@@ -106,14 +106,10 @@ class BillardModel:
         shape.friction = 1.0  # Friction élevée entre les boules
         shape.color = color_rgb + (255,)
 
-        # CHANGEMENT MAJEUR 3: Simulation de la friction linéaire (tapis)
-        # On crée un joint pivot entre le sol (static) et la boule
-        # Cela empêche la boule de glisser infiniment
         pivot = pymunk.PivotJoint(self.space.static_body, body, (0, 0), (0, 0))
         pivot.max_bias = 0  # Désactive la correction de position (important)
         pivot.max_force = 100  # Force de friction (Ajuste ça si le tapis est trop lent/rapide)
 
-        # On ajoute le pivot à l'espace physique
         self.space.add(body, shape, pivot)
         return shape
 
@@ -127,8 +123,6 @@ class BillardModel:
 
     def update(self, dt: float):
         if not self.is_aiming:
-            # On divise le step pour plus de précision physique (sub-stepping)
-            # 2 petits pas au lieu d'un grand évite que les boules se traversent à haute vitesse
             steps = 2
             for _ in range(steps):
                 self.space.step(dt / steps)
@@ -138,7 +132,6 @@ class BillardModel:
                 self.cue_locked = False
 
     def _all_balls_stopped(self, threshold: float = 5.0) -> bool:
-        # Seuil légèrement augmenté car le PivotJoint arrête bien les boules
         for body in self.space.bodies:
             if body.body_type == pymunk.Body.DYNAMIC:
                 if body.velocity.length > threshold:
@@ -177,7 +170,6 @@ class BillardModel:
         self.power = 0
 
     def _save_state(self):
-        # Sauvegarde simplifiée (on ne sauvegarde pas les joints, juste positions)
         state = []
         for shape in self.space.shapes:
             if isinstance(shape, pymunk.Circle):
@@ -193,11 +185,8 @@ class BillardModel:
         if not self.history or not self.is_aiming: return
         state = self.history.pop()
 
-        # Récupérer toutes les balles
         balls = [s for s in self.space.shapes if isinstance(s, pymunk.Circle)]
 
-        # Attention: si le nombre de balles a changé (empoché), ça peut bugger
-        # Pour l'instant on assume que le nombre est constant ou on gère l'index
         for i, shape in enumerate(balls):
             if i < len(state):
                 b = state[i]
@@ -208,8 +197,6 @@ class BillardModel:
                 shape.body.activate()
 
     def reset(self):
-        # CHANGEMENT IMPORTANT: Nettoyage complet
-        # Il faut supprimer les bodies, les shapes ET les CONSTRAINTS (les pivots)
         for body in list(self.space.bodies):
             if body.body_type == pymunk.Body.DYNAMIC:
                 self.space.remove(body)
