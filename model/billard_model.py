@@ -4,6 +4,8 @@ from typing import List, Tuple
 import math
 import random
 
+from PyQt6.QtCore import QObject
+
 
 @dataclass
 class BallState:
@@ -14,7 +16,25 @@ class BallState:
 
 # La physique des boules a été adapté par Gemini à l'aide d'un projet de billard déjà fait sur Github :
 # Source : https://github.com/iwarshavsky/Pool-Simulation/blob/main/utils/ball.py
-class BillardModel:
+class BillardModel(QObject):
+
+    ball_radius = 15
+
+    # Ajustement pour la nouvelle masse (3x plus lourde) et la friction linéaire
+    max_power = 8000
+
+    cue_length = 200
+    cue_width = 8
+
+    cue_ball = None
+    cue_stick = None
+
+    is_aiming = True
+    cue_locked = False
+    cue_angle = 0
+    power = 0
+    cue_distance = 100
+
     def __init__(self, width: int = 1600, height: int = 800):
         self.width = width
         self.height = height
@@ -28,23 +48,6 @@ class BillardModel:
         # Paramètres pour que les boules s'arrêtent net quand elles sont très lentes
         self.space.sleep_time_threshold = 0.3
         self.space.idle_speed_threshold = 10
-
-        self.ball_radius = 15
-
-        # Ajustement pour la nouvelle masse (3x plus lourde) et la friction linéaire
-        self.max_power = 8000
-
-        self.cue_length = 200
-        self.cue_width = 8
-
-        self.cue_ball = None
-        self.cue_stick = None
-
-        self.is_aiming = True
-        self.cue_locked = False
-        self.cue_angle = 0
-        self.cue_distance = 100
-        self.power = 0
 
         self.history: List[List[BallState]] = []
 
