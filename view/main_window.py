@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QSizePolicy
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal, QPointF
-from PyQt6.QtGui import QPainter, QColor, QPen, QBrush
+from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QRadialGradient
 from PyQt6.uic import loadUi
 import pymunk
 
@@ -96,6 +96,7 @@ class PymunkWidget(QWidget):
         margin = 40
         painter.drawRect(margin, margin, self.width() - 2 * margin, self.height() - 2 * margin)
 
+    # Méthode amélioré avec Gemini pour les boules lignées, un QGradient est ici utilisé
     def _draw_balls(self, painter):
         for shape in self.space.shapes:
             if isinstance(shape, pymunk.Circle):
@@ -103,25 +104,40 @@ class PymunkWidget(QWidget):
                 qt_x, qt_y = self._pymunk_to_qt(pos.x, pos.y)
                 radius = shape.radius
 
-                # Ombre
-                painter.setBrush(QBrush(QColor(0, 0, 0, 50)))
-                painter.setPen(Qt.PenStyle.NoPen)
-                painter.drawEllipse(QPointF(qt_x + 3, qt_y + 3), radius, radius)
+                # Par défaut, une balle blanche
+                color_tuple = getattr(shape, 'color', (255, 255, 255))
+                is_stripe = getattr(shape, 'is_stripe', False)
 
-                # Couleur de la balle (récupérée du modèle)
-                if hasattr(shape, 'color'):
-                    color = QColor(*shape.color)
+                # Conversion du tuple (R, G, B) en QColor
+                # Les 3 premiers éléments sont pris au cas où il y aurait l'alpha
+                base_color = QColor(color_tuple[0], color_tuple[1], color_tuple[2])
+
+                if is_stripe:
+                    # Création d'un dégradé radial centré sur la balle
+                    gradient = QRadialGradient(qt_x, qt_y, radius)
+
+                    # Le centre est blanc (la partie "balle")
+                    # Blanc jusqu'à 55% du rayon
+                    gradient.setColorAt(0.0, QColor(255, 255, 255))
+                    gradient.setColorAt(0.55, QColor(255, 255, 255))
+
+                    # Transition nette vers la couleur (la rayure)
+                    gradient.setColorAt(0.6, base_color)
+                    gradient.setColorAt(1.0, base_color)
+
+                    painter.setBrush(QBrush(gradient))
                 else:
-                    color = QColor(255, 255, 255)
+                    # Balle pleine classique
+                    painter.setBrush(QBrush(base_color))
 
-                painter.setBrush(QBrush(color))
+                # Contour gris foncé pour bien voir les bords (surtout pour la blanche)
                 painter.setPen(QPen(QColor(50, 50, 50), 1))
                 painter.drawEllipse(QPointF(qt_x, qt_y), radius, radius)
 
-                # Petit reflet pour le style
-                painter.setBrush(QBrush(QColor(255, 255, 255, 100)))
+                # (Optionnel) Petit reflet brillant pour l'effet 3D
+                painter.setBrush(QBrush(QColor(255, 255, 255, 80)))
                 painter.setPen(Qt.PenStyle.NoPen)
-                painter.drawEllipse(QPointF(qt_x - radius / 3, qt_y - radius / 3), radius / 2.5, radius / 2.5)
+                painter.drawEllipse(QPointF(qt_x - radius / 3, qt_y - radius / 3), radius / 3, radius / 3)
 
     def _draw_cue_stick(self, painter):
         if not self.model: return
