@@ -3,8 +3,8 @@ import math
 from typing import TYPE_CHECKING
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QSizePolicy
-from PyQt6.QtCore import QTimer, Qt, pyqtSignal, QPointF
-from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QRadialGradient
+from PyQt6.QtCore import QTimer, Qt, pyqtSignal, QPointF, QRectF
+from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QRadialGradient, QPainterPath
 from PyQt6.uic import loadUi
 import pymunk
 
@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 
 
 class PymunkWidget(QWidget):
-    """Widget qui dessine Pymunk avec QPainter"""
     mouse_moved = pyqtSignal(int, int)
     mouse_pressed = pyqtSignal()
     mouse_released = pyqtSignal()
@@ -27,7 +26,6 @@ class PymunkWidget(QWidget):
         self.w_attr = width
         self.h_attr = height
 
-        # CRUCIAL: On fixe la taille pour garantir que le visuel matche la physique
         self.setFixedSize(width, height)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
@@ -41,7 +39,7 @@ class PymunkWidget(QWidget):
         self.setMouseTracking(True)
         self.mouse_pressed_flag = False
 
-    def set_controller(self,controller):
+    def set_controller(self, controller):
         self.controller = controller
 
     def set_model(self, model):
@@ -49,7 +47,6 @@ class PymunkWidget(QWidget):
         self.space = model.space
 
     def _pymunk_to_qt(self, x, y):
-        # Conversion simple puisque la taille est fixe
         return (x, self.height() - y)
 
     def _qt_to_pymunk(self, x, y):
@@ -59,8 +56,8 @@ class PymunkWidget(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        # Tapis vert
-        painter.fillRect(self.rect(), QColor(34, 139, 34))
+        # COULEUR DU TAPIS DE JEU
+        painter.fillRect(self.rect(), QColor(25, 150, 60))
 
         if self.space is None:
             return
@@ -73,30 +70,18 @@ class PymunkWidget(QWidget):
             self._draw_cue_stick(painter)
 
     def _draw_walls(self, painter):
-        # Dessine le cadre.
-        # Physique: Mur à 20px du bord avec rayon 40 -> bord intérieur à 20+40 = 60px
-        # Visuel: On dessine un rectangle brun épais pour représenter le bois
-
-        wall_color = QColor(139, 69, 19)
+        wall_color = QColor(75, 37, 14)
         painter.setBrush(Qt.BrushStyle.NoBrush)
-
-        # Épaisseur visuelle du mur
         pen_width = 40
         pen = QPen(wall_color, pen_width)
-        # On dessine "à cheval" sur la ligne, donc on déplace de moitié vers l'extérieur
-        # pour que l'intérieur du trait corresponde à la physique
         pen.setJoinStyle(Qt.PenJoinStyle.MiterJoin)
         painter.setPen(pen)
-
-        # Le rectangle visuel doit s'arrêter là où la balle rebondit
-        # Dans le modèle: mur posé à 20, rayon 40. Le contact se fait à 20+40 = 60.
-        # Donc le bord intérieur visuel doit être à 60.
-        # Si on dessine un rect à 40 avec épaisseur 40, il va de 20 à 60. C'est parfait.
 
         margin = 40
         painter.drawRect(margin, margin, self.width() - 2 * margin, self.height() - 2 * margin)
 
-    # Méthode amélioré avec Gemini pour les boules lignées, un QGradient est ici utilisé
+
+    # Gemini a ici fait les balles lignées
     def _draw_balls(self, painter):
         for shape in self.space.shapes:
             if isinstance(shape, pymunk.Circle):
@@ -104,40 +89,59 @@ class PymunkWidget(QWidget):
                 qt_x, qt_y = self._pymunk_to_qt(pos.x, pos.y)
                 radius = shape.radius
 
-                # Par défaut, une balle blanche
                 color_tuple = getattr(shape, 'color', (255, 255, 255))
                 is_stripe = getattr(shape, 'is_stripe', False)
+                base_color = QColor(*color_tuple)
 
-                # Conversion du tuple (R, G, B) en QColor
-                # Les 3 premiers éléments sont pris au cas où il y aurait l'alpha
-                base_color = QColor(color_tuple[0], color_tuple[1], color_tuple[2])
+                # Sauvegarde l'état du peintre pour appliquer la rotation locale
+                painter.save()
+
+                # 1. Déplacement au centre de la balle
+                painter.translate(qt_x, qt_y)
+
+                # 2. Rotation selon la physique (la balle tourne visuellement !)
+                angle_deg = math.degrees(shape.body.angle)
+                painter.rotate(angle_deg)
+
+                # Création du cercle de découpe (pour ne pas dessiner hors de la balle)
+                path = QPainterPath()
+                path.addEllipse(QPointF(0, 0), radius, radius)
+                painter.setClipPath(path)
 
                 if is_stripe:
-                    # Création d'un dégradé radial centré sur la balle
-                    gradient = QRadialGradient(qt_x, qt_y, radius)
+                    # Fond BLANC
+                    painter.setBrush(QBrush(QColor(255, 255, 255)))
+                    painter.setPen(Qt.PenStyle.NoPen)
+                    painter.drawEllipse(QPointF(0, 0), radius, radius)
 
-                    # Le centre est blanc (la partie "balle")
-                    # Blanc jusqu'à 55% du rayon
-                    gradient.setColorAt(0.0, QColor(255, 255, 255))
-                    gradient.setColorAt(0.55, QColor(255, 255, 255))
-
-                    # Transition nette vers la couleur (la rayure)
-                    gradient.setColorAt(0.6, base_color)
-                    gradient.setColorAt(1.0, base_color)
-
-                    painter.setBrush(QBrush(gradient))
-                else:
-                    # Balle pleine classique
+                    # Bande COLORÉE au milieu
+                    # On dessine un rectangle large au centre
+                    stripe_height = radius * 1.1  # Épaisseur de la rayure
                     painter.setBrush(QBrush(base_color))
+                    painter.drawRect(QRectF(-radius, -stripe_height / 2, radius * 2, stripe_height))
+                else:
+                    # Balle PLEINE
+                    painter.setBrush(QBrush(base_color))
+                    painter.setPen(Qt.PenStyle.NoPen)
+                    painter.drawEllipse(QPointF(0, 0), radius, radius)
 
-                # Contour gris foncé pour bien voir les bords (surtout pour la blanche)
+                # On désactive le clipping pour dessiner le contour proprement
+                painter.setClipping(False)
+
+                # Contour
                 painter.setPen(QPen(QColor(50, 50, 50), 1))
-                painter.drawEllipse(QPointF(qt_x, qt_y), radius, radius)
+                painter.setBrush(Qt.BrushStyle.NoBrush)
+                painter.drawEllipse(QPointF(0, 0), radius, radius)
 
-                # (Optionnel) Petit reflet brillant pour l'effet 3D
+                # Reflet (Speculaire)
+                # On annule la rotation pour que la lumière vienne toujours du même endroit (en haut à gauche)
+                painter.rotate(-angle_deg)
+
                 painter.setBrush(QBrush(QColor(255, 255, 255, 80)))
                 painter.setPen(Qt.PenStyle.NoPen)
-                painter.drawEllipse(QPointF(qt_x - radius / 3, qt_y - radius / 3), radius / 3, radius / 3)
+                painter.drawEllipse(QPointF(-radius / 3, -radius / 3), radius / 3, radius / 3)
+
+                painter.restore()
 
     def _draw_cue_stick(self, painter):
         if not self.model: return
@@ -193,19 +197,15 @@ class MainWindow(QMainWindow):
         super().__init__()
         loadUi('view/ui/main_window.ui', self)
 
-        # On laisse le layout gérer, mais on s'assure que le widget Pymunk a sa taille fixe
-        # Le frame va s'adapter autour
-        self.pymunk_widget = PymunkWidget(1200, 600)  # Taille du modèle par défaut
+        self.pymunk_widget = PymunkWidget(1200, 600)
 
         existing_layout = self.graphFrame.layout()
         if existing_layout is not None:
-            # On vide le layout s'il y a des trucs bizarres avant
             while existing_layout.count():
                 item = existing_layout.takeAt(0)
                 widget = item.widget()
                 if widget: widget.deleteLater()
             existing_layout.addWidget(self.pymunk_widget)
-            # Centrer le jeu dans la fenêtre
             existing_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         else:
             layout = QVBoxLayout()
@@ -231,7 +231,6 @@ class MainWindow(QMainWindow):
         self.pymunk_widget.lock_toggled.connect(controller.on_toggle_lock)
 
     def set_model(self, model):
-        # Important : on redimensionne le widget selon le modèle
         self.pymunk_widget.w_attr = model.width
         self.pymunk_widget.h_attr = model.height
         self.pymunk_widget.setFixedSize(model.width, model.height)
@@ -257,7 +256,7 @@ class MainWindow(QMainWindow):
         self.progressBar.setValue(0)
 
     def increase_power(self):
-        self.power_accumulation = min(100, self.power_accumulation + 4)  # Un peu plus rapide
+        self.power_accumulation = min(100, self.power_accumulation + 4)
         self.progressBar.setValue(self.power_accumulation)
         if hasattr(self, 'controller'):
             self.controller.set_power(self.power_accumulation / 100.0)

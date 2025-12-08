@@ -18,7 +18,7 @@ class MainController:
         self.model.update(1 / 60.0)
 
     def on_mouse_move(self, x: int, y: int):
-        # Si verrouillé ou pas en mode visée, on ne bouge pas
+        # Si verrouillé ou pas en mode visée, est "locked"
         if not self.model.is_aiming or self.model.cue_locked:
             return
 

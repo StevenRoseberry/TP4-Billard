@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     # Créer la vue
     view = MainWindow()
-    view.setWindowTitle("Billard - Pymunk + QPainter")
+    view.setWindowTitle("FREE ANIME VIDEOS 4K HIGH RES STREAMING VIDEO FULL HD")
 
     # Créer le contrôleur
     controller = MainController(model, view)

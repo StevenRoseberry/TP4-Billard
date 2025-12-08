@@ -3,21 +3,8 @@ from dataclasses import dataclass
 from typing import List, Tuple
 import math
 import random
+from PyQt6.QtCore import QObject
 
-# --- AJOUT: Définition des couleurs standards du billard (RGB) ---
-BALL_COLORS = {
-    1: (255, 215, 0),  # Jaune (1 et 9)
-    2: (0, 0, 255),  # Bleu (2 et 10)
-    3: (255, 0, 0),  # Rouge (3 et 11)
-    4: (128, 0, 128),  # Violet (4 et 12)
-    5: (255, 165, 0),  # Orange (5 et 13)
-    6: (34, 139, 34),  # Vert (6 et 14)
-    7: (128, 0, 0),  # Marron (7 et 15)
-    8: (0, 0, 0),  # Noir (8)
-}
-
-
-# -----------------------------------------------------------------
 
 @dataclass
 class BallState:
@@ -25,21 +12,34 @@ class BallState:
     velocity: Tuple[float, float]
     angular_velocity: float
 
+# La méthode pour les boules (numéro, couleur, stripe) et la rotation des boules est généré par Gemini
+class BillardModel(QObject):
+    BALL_COLORS = {
+        1: (255, 215, 0),
+        2: (0, 0, 255),
+        3: (255, 0, 0),
+        4: (128, 0, 128),
+        5: (255, 165, 0),
+        6: (34, 139, 34),
+        7: (128, 0, 0),
+        8: (0, 0, 0),
+    }
 
-class BillardModel:
     def __init__(self, width: int = 1200, height: int = 600):
+        super().__init__()
         self.width = width
         self.height = height
 
         self.space = pymunk.Space()
         self.space.gravity = (0, 0)
-        # Légère augmentation de la friction pour que ça roule moins "sur la glace"
-        self.space.damping = 0.98
+        self.space.damping = 1.0
+        self.space.sleep_time_threshold = 0.3
+        self.space.idle_speed_threshold = 10
 
         self.ball_radius = 15
         self.cue_length = 200
         self.cue_width = 8
-        self.max_power = 2500
+        self.max_power = 8000
 
         self.cue_ball = None
         self.cue_stick = None
@@ -57,17 +57,11 @@ class BillardModel:
         self._create_cue_stick()
 
     def _create_table(self):
-        # Murs physiques placés exactement sur les bords
-        # L'épaisseur repousse la balle vers l'intérieur
+        static_body = self.space.static_body
         thickness = 40
-
-        # Mur Gauche
         self._add_wall((20, 0), (20, self.height), thickness)
-        # Mur Droit
         self._add_wall((self.width - 20, 0), (self.width - 20, self.height), thickness)
-        # Mur Haut (Pymunk 0 est en bas, donc c'est le "bas" visuel si Qt n'est pas inversé)
         self._add_wall((0, 20), (self.width, 20), thickness)
-        # Mur Bas
         self._add_wall((0, self.height - 20), (self.width, self.height - 20), thickness)
 
     def _add_wall(self, a, b, radius):
@@ -77,12 +71,8 @@ class BillardModel:
         self.space.add(wall)
 
     def _create_balls(self):
-        # 1. La boule blanche (Numéro 0 par convention ici)
-        # On la place un peu plus à gauche pour le "break"
-        cue_ball_pos = (self.width * 0.25, self.height / 2)
-        self.cue_ball = self._create_single_ball(cue_ball_pos, number=0)
+        self.cue_ball = self._create_single_ball((self.width // 4, self.height // 2), 0)
 
-        # 2. Le rack de boules colorées (Triangle)
         start_x = self.width * 0.75
         start_y = self.height / 2
 
@@ -90,10 +80,8 @@ class BillardModel:
         offset_x = self.ball_radius * 1.75
         offset_y = self.ball_radius * 2.05
 
-        # On prépare les numéros disponibles (tous sauf la 8 et la blanche)
         available_numbers = [1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15]
-        random.shuffle(available_numbers)  # On mélange pour que ce soit différent à chaque partie
-        # -----------------------------------------------
+        random.shuffle(available_numbers)
 
         for col in range(rows):
             x = start_x + (col * offset_x)
@@ -102,48 +90,44 @@ class BillardModel:
             for row in range(col + 1):
                 y = start_col_y + (row * offset_y)
 
-                # La noire (8) doit être au milieu de la 3ème colonne (index col=2, row=1)
                 if col == 2 and row == 1:
                     ball_number = 8
                 else:
-                    # On prend un numéro au hasard dans le sac
                     ball_number = available_numbers.pop()
 
                 self._create_single_ball((x, y), ball_number)
 
-    # Prend en fonction le numéro de la balle
     def _create_single_ball(self, position, number):
-        mass = 1
+        mass = 3
         moment = pymunk.moment_for_circle(mass, 0, self.ball_radius)
+
         body = pymunk.Body(mass, moment)
         body.position = position
 
         shape = pymunk.Circle(body, self.ball_radius)
-        shape.elasticity = 0.95
-        shape.friction = 0.5
+        shape.elasticity = 0.8
+        shape.friction = 1.0
 
         if number == 0:
-            # Blanche
             color_rgb = (255, 255, 255)
             is_stripe = False
         elif number == 8:
-            # Noire
-            color_rgb = BALL_COLORS[8]
+            color_rgb = self.BALL_COLORS[8]
             is_stripe = False
         else:
-            # Autres balles
             is_stripe = number > 8
-            # Si c'est > 8 (ex: 9), la couleur de base est 9-8 = 1 (Jaune)
-            base_color_index = number if number <= 8 else number - 8
-            color_rgb = BALL_COLORS[base_color_index]
+            base_index = number if number <= 8 else number - 8
+            color_rgb = self.BALL_COLORS[base_index]
 
-        # Info stocké directement sur l'objet shape de Pymunk que la vue peut lire
-        shape.color = color_rgb
+        shape.color = color_rgb + (255,)
         shape.number = number
         shape.is_stripe = is_stripe
-        # -----------------------------------------------------------
 
-        self.space.add(body, shape)
+        pivot = pymunk.PivotJoint(self.space.static_body, body, (0, 0), (0, 0))
+        pivot.max_bias = 0
+        pivot.max_force = 100
+
+        self.space.add(body, shape, pivot)
         return shape
 
     def _create_cue_stick(self):
@@ -156,7 +140,6 @@ class BillardModel:
 
     def update(self, dt: float):
         if not self.is_aiming:
-            # On utilise une sous-étape plus fine pour une meilleure physique
             steps = 2
             for _ in range(steps):
                 self.space.step(dt / steps)
@@ -164,15 +147,21 @@ class BillardModel:
             if self._all_balls_stopped():
                 self.is_aiming = True
                 self.cue_locked = False
+                self._stop_rotation()
 
-    def _all_balls_stopped(self, threshold: float = 2.0) -> bool:
-        for shape in self.space.shapes:
-            if isinstance(shape, pymunk.Circle):
-                if shape.body.velocity.length > threshold:
+    def _stop_rotation(self):
+        for body in self.space.bodies:
+            if body.body_type == pymunk.Body.DYNAMIC:
+                body.angular_velocity = 0
+                body.velocity = (0, 0)
+
+    def _all_balls_stopped(self, threshold: float = 5.0) -> bool:
+        for body in self.space.bodies:
+            if body.body_type == pymunk.Body.DYNAMIC:
+                if body.velocity.length > threshold:
                     return False
         return True
 
-    # ... (Le reste des méthodes set_cue_angle, shoot, reset, etc. reste identique) ...
     def set_cue_angle(self, angle: float):
         if self.is_aiming and not self.cue_locked:
             self.cue_angle = angle
@@ -219,19 +208,26 @@ class BillardModel:
     def undo_last_shot(self):
         if not self.history or not self.is_aiming: return
         state = self.history.pop()
-        i = 0
-        for shape in self.space.shapes:
-            if isinstance(shape, pymunk.Circle) and i < len(state):
+
+        balls = [s for s in self.space.shapes if isinstance(s, pymunk.Circle)]
+
+        for i, shape in enumerate(balls):
+            if i < len(state):
                 b = state[i]
                 shape.body.position = b.position
                 shape.body.velocity = b.velocity
                 shape.body.angular_velocity = b.angular_velocity
-                i += 1
+                shape.body.activate()
 
     def reset(self):
+        for body in list(self.space.bodies):
+            if body.body_type == pymunk.Body.DYNAMIC:
+                self.space.remove(body)
         for shape in list(self.space.shapes):
             if isinstance(shape, pymunk.Circle):
-                self.space.remove(shape, shape.body)
+                self.space.remove(shape)
+        for constraint in list(self.space.constraints):
+            self.space.remove(constraint)
 
         self._create_balls()
         self.is_aiming = True
