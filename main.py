@@ -1,24 +1,22 @@
 import sys
 from PyQt6.QtWidgets import QApplication
+# Les imports doivent pointer vers le dossier model/
 from model.billard_model import BillardModel
 from view.main_window import MainWindow
 from controller.main_controller import MainController
 
-
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
-    # Créer le modèle
-    model = BillardModel(width=1200, height=500)
+    # Création du modèle principal
+    model = BillardModel(width=1200, height=600)
 
-    # Créer la vue
+    # Création de la vue
     view = MainWindow()
-    view.setWindowTitle("FREE ANIME VIDEOS 4K HIGH RES STREAMING VIDEO FULL HD")
+    view.setWindowTitle("Billard - Pymunk")
 
-    # Créer le contrôleur
+    # Création du contrôleur
     controller = MainController(model, view)
 
-    # Afficher la fenêtre
     view.show()
-
     sys.exit(app.exec())
