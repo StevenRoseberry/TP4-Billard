@@ -13,6 +13,7 @@ class BallState:
     velocity: Tuple[float, float]
     angular_velocity: float
 
+
 # La méthode pour les boules (numéro, couleur, stripe) et la rotation des boules est généré par Gemini
 class BillardModel(QObject):
     BALL_COLORS = {
@@ -26,7 +27,7 @@ class BillardModel(QObject):
         8: (0, 0, 0),
     }
 
-    #initialisation du QAbstractItemModel
+    # initialisation du QAbstractItemModel
     tracked_balls_list = BallsList()
 
     def __init__(self, width: int = 1200, height: int = 600):
@@ -63,10 +64,15 @@ class BillardModel(QObject):
     def _create_table(self):
         static_body = self.space.static_body
         thickness = 40
-        self._add_wall((20, 0), (20, self.height), thickness)
-        self._add_wall((self.width - 20, 0), (self.width - 20, self.height), thickness)
-        self._add_wall((0, 20), (self.width, 20), thickness)
-        self._add_wall((0, self.height - 20), (self.width, self.height - 20), thickness)
+        hole = 120
+
+        #walls
+        self._add_wall((20, hole), (20, self.height - hole), thickness)
+        self._add_wall((self.width - 20, hole), (self.width - 20, self.height - hole), thickness)
+        self._add_wall((hole, 20), (self.width - hole, 20), thickness)
+        self._add_wall((hole, self.height - 20), (self.width - hole, self.height - 20), thickness)
+        #triangle
+
 
     def _add_wall(self, a, b, radius):
         wall = pymunk.Segment(self.space.static_body, a, b, radius)
@@ -144,7 +150,7 @@ class BillardModel(QObject):
 
     def update(self, dt: float):
         if not self.is_aiming:
-            
+
             self.update_graph()
 
             steps = 2
@@ -204,7 +210,8 @@ class BillardModel(QObject):
         state = []
         for shape in self.space.shapes:
             if isinstance(shape, pymunk.Circle):
-                state.append(BallState(position=tuple(shape.body.position),velocity=tuple(shape.body.velocity),angular_velocity=shape.body.angular_velocity))
+                state.append(BallState(position=tuple(shape.body.position), velocity=tuple(shape.body.velocity),
+                                       angular_velocity=shape.body.angular_velocity))
         self.history.append(state)
         if len(self.history) > 10: self.history.pop(0)
 
@@ -248,9 +255,9 @@ class BillardModel(QObject):
 
     """Graph et liste de balle"""
 
-    def add_ball(self,number):
+    def add_ball(self, number):
         self.tracked_balls_list.add_item(number)
-    
+
     def update_graph(self):
         print("hello list")
 

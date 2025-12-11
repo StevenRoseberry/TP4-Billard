@@ -79,7 +79,68 @@ class PymunkWidget(QWidget):
         painter.setPen(pen)
 
         margin = 40
-        painter.drawRect(margin, margin, self.width() - 2 * margin, self.height() - 2 * margin)
+        hole = margin * 3
+        #pour les triangles
+        spacer = margin/2
+        tri_margin = hole - spacer
+
+        #Murs verticaux
+        painter.drawLine(margin, hole, margin, self.height() - hole)
+        painter.drawLine(self.width() - margin, hole, self.width() - margin, self.height() - hole)
+
+        #Murs horisontaux
+        painter.drawLine(hole, margin, self.width() - hole, margin)
+        painter.drawLine(hole, self.height() - margin, self.width() - hole, self.height() - margin)
+
+
+
+        """Liste des triangles à dessiner
+            Par Maxime grondin (j'en suis fier)
+            
+            Pour générer un triangle rectangle isocèle, il faut ajouter à la liste (liste_triangle_rectangle)
+            [(x de l'origine,y de l'origine), +/- 1, +/- 1]
+            
+            le +/- 1 dit à la boucle dans quelle axe les deux cathètes seront dessinées
+        """
+
+
+
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setBrush(QBrush(QColor("red")))
+        painter.setPen(Qt.PenStyle.NoPen)
+
+        liste_triangle_rectangle = [#mur verticaux
+                                    [(spacer, tri_margin),1,-1],
+                                    [(spacer, self.height() - tri_margin),1,1],
+                                    [(self.width() - spacer, tri_margin),-1,-1],
+                                    [(self.width() - spacer, self.height() - tri_margin),-1,1],
+                                    #mur horisontaux
+                                    [(tri_margin, spacer), -1, 1],
+                                    [(tri_margin, self.height() - spacer), -1, -1],
+                                    [(self.width() - tri_margin, spacer), 1, 1],
+                                    [(self.width() - tri_margin, self.height() - spacer), 1, -1],
+                                    #poches du milieu
+                                    ]
+
+        for coor in liste_triangle_rectangle:
+            tri = [QPointF(coor[0][0], coor[0][1]),
+                   QPointF(coor[0][0] + margin * coor[1], coor[0][1]),
+                   QPointF(coor[0][0], coor[0][1] + margin * coor[2])]
+
+            painter.drawPolygon(tri)
+
+
+        # triangle1 = [QPointF(margin/2, hole - margin/2),
+        #              QPointF(margin/2, hole/2),
+        #              QPointF(hole / 2 ,hole - margin/2)]
+        #
+        # triangle2 = [QPointF(margin/2,self.height() - hole + margin/2),
+        #              QPointF(margin/2,self.height() - hole / 2),
+        #              QPointF(hole / 2,self.height() - hole + margin/2)]
+        # painter.drawPolygon(triangle1)
+        # painter.drawPolygon(triangle2)
+
+
 
 
     # Gemini a ici fait les balles lignées
