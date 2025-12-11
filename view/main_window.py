@@ -129,20 +129,6 @@ class PymunkWidget(QWidget):
 
             painter.drawPolygon(tri)
 
-
-        # triangle1 = [QPointF(margin/2, hole - margin/2),
-        #              QPointF(margin/2, hole/2),
-        #              QPointF(hole / 2 ,hole - margin/2)]
-        #
-        # triangle2 = [QPointF(margin/2,self.height() - hole + margin/2),
-        #              QPointF(margin/2,self.height() - hole / 2),
-        #              QPointF(hole / 2,self.height() - hole + margin/2)]
-        # painter.drawPolygon(triangle1)
-        # painter.drawPolygon(triangle2)
-
-
-
-
     # Gemini a ici fait les balles lignées
     def _draw_balls(self, painter):
         for shape in self.space.shapes:

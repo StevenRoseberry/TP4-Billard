@@ -65,6 +65,8 @@ class BillardModel(QObject):
         static_body = self.space.static_body
         thickness = 40
         hole = 120
+        tri_margin = hole - thickness/2
+        spacer = thickness/2
 
         #walls
         self._add_wall((20, hole), (20, self.height - hole), thickness)
@@ -72,6 +74,38 @@ class BillardModel(QObject):
         self._add_wall((hole, 20), (self.width - hole, 20), thickness)
         self._add_wall((hole, self.height - 20), (self.width - hole, self.height - 20), thickness)
         #triangle
+        """Liste des triangles à dessiner
+                    Par Maxime grondin (j'en suis fier)
+
+                    Pour générer un triangle rectangle isocèle, il faut ajouter à la liste (liste_triangle_rectangle)
+                    [(x de l'origine,y de l'origine), +/- 1, +/- 1]
+
+                    le +/- 1 dit à la boucle dans quelle axe les deux cathètes seront dessinées
+                """
+        liste_triangle_rectangle = [  # mur verticaux
+            [(spacer, tri_margin), 1, -1],
+            [(spacer, self.height - tri_margin), 1, 1],
+            [(self.width - spacer, tri_margin), -1, -1],
+            [(self.width - spacer, self.height - tri_margin), -1, 1],
+            # mur horisontaux
+            [(tri_margin, spacer), -1, 1],
+            [(tri_margin, self.height - spacer), -1, -1],
+            [(self.width - tri_margin, spacer), 1, 1],
+            [(self.width - tri_margin, self.height - spacer), 1, -1],
+            # poches du milieu
+        ]
+        self._add_tiangle(liste_triangle_rectangle,thickness)
+
+    def _add_tiangle(self, list, thickness):
+        for coor in list:
+            tri = [(coor[0][0], coor[0][1]),
+                   (coor[0][0] + thickness * coor[1], coor[0][1]),
+                   (coor[0][0], coor[0][1] + thickness * coor[2])]
+
+            triangle = pymunk.Poly(self.space.static_body, tri)
+            triangle.elasticity = 0.8
+            triangle.friction = 0.5
+            self.space.add(triangle)
 
 
     def _add_wall(self, a, b, radius):
