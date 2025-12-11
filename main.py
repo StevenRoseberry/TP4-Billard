@@ -17,6 +17,7 @@ if __name__ == '__main__':
 
     # Création du contrôleur
     controller = MainController(model, view)
+    view.set_controller(controller)
 
     view.show()
     sys.exit(app.exec())

@@ -209,6 +209,9 @@ class MainWindow(QMainWindow):
     balleSpinBox = QSpinBox
     supprimerPushButton = QPushButton
 
+    if TYPE_CHECKING:
+        controller: MainController | None
+
     def __init__(self):
         super().__init__()
         loadUi('view/ui/main_window.ui', self)
@@ -229,10 +232,11 @@ class MainWindow(QMainWindow):
             layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.graphFrame.setLayout(layout)
 
-        self.createButton.clicked.connect(self.on_reset)
-        self.deleteButton.clicked.connect(self.on_undo)
-        self.pushButton.pressed.connect(self.on_shoot_pressed)
-        self.pushButton.released.connect(self.on_shoot_released)
+        #Todo : voir controller
+        # self.createButton.clicked.connect(self.on_reset)
+        # self.deleteButton.clicked.connect(self.on_undo)
+        # self.pushButton.pressed.connect(self.on_shoot_pressed)
+        # self.pushButton.released.connect(self.on_shoot_released)
 
         self.progressBar.setValue(0)
         self.power_timer = QTimer()
@@ -242,7 +246,7 @@ class MainWindow(QMainWindow):
         #DockWidget et graph
         self.actionAfficher_graphiques.toggled.connect(self.dock_widget_visibility)
         self.dockWidget.visibilityChanged.connect(self.uncheck_action)
-        # self.ajouterPushButton.clicked.connect(self.ajou)
+        # self.ajouterPushButton.clicked.connect(self.ajouter)
 
     def set_controller(self, controller):
         self.controller = controller
@@ -250,22 +254,13 @@ class MainWindow(QMainWindow):
         self.pymunk_widget.mouse_pressed.connect(controller.on_mouse_press)
         self.pymunk_widget.mouse_released.connect(controller.on_mouse_release)
         self.pymunk_widget.lock_toggled.connect(controller.on_toggle_lock)
-        #initialisation de la ListView
-        self.listView.setModel(self.controller.getListModel())
+
 
     def set_model(self, model):
         self.pymunk_widget.w_attr = model.width
         self.pymunk_widget.h_attr = model.height
         self.pymunk_widget.setFixedSize(model.width, model.height)
         self.pymunk_widget.set_model(model)
-
-    def on_reset(self):
-        if hasattr(self, 'controller'):
-            self.controller.reset_game()
-
-    def on_undo(self):
-        if hasattr(self, 'controller'):
-            self.controller.undo_shot()
 
     def on_shoot_pressed(self):
         self.power_accumulation = 0
@@ -290,6 +285,4 @@ class MainWindow(QMainWindow):
         self.dockWidget.setVisible(self.actionAfficher_graphiques.isChecked())
 
     def uncheck_action(self,visible):
-        if not visible:
-            self.actionAfficher_graphiques.setChecked(visible)
-
+        self.actionAfficher_graphiques.setChecked(self.dockWidget.isVisible())

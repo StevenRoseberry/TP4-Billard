@@ -204,11 +204,7 @@ class BillardModel(QObject):
         state = []
         for shape in self.space.shapes:
             if isinstance(shape, pymunk.Circle):
-                state.append(BallState(
-                    position=tuple(shape.body.position),
-                    velocity=tuple(shape.body.velocity),
-                    angular_velocity=shape.body.angular_velocity
-                ))
+                state.append(BallState(position=tuple(shape.body.position),velocity=tuple(shape.body.velocity),angular_velocity=shape.body.angular_velocity))
         self.history.append(state)
         if len(self.history) > 10: self.history.pop(0)
 
