@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List, Tuple
 import math
 import random
-from PyQt6.QtCore import QObject
+from PyQt6.QtCore import QObject, pyqtSignal
 from model.graph_model import BallsList
 
 
@@ -256,3 +256,11 @@ class BillardModel(QObject):
 
     def getListModel(self):
         return self.tracked_balls_list
+
+    def ajouter_balle_liste(self, balle):
+        if balle is not None:
+            self.tracked_balls_list.add_item(balle)
+
+    def supprimer_balle_liste(self, balle):
+        if balle is not None and self.tracked_balls_list.rowCount() > 0:
+            self.tracked_balls_list.remove_item(balle)

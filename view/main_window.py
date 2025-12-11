@@ -208,9 +208,11 @@ class MainWindow(QMainWindow):
     ajouterPushButton = QPushButton
     balleSpinBox = QSpinBox
     supprimerPushButton = QPushButton
+    toutAjouterPushButton = QPushButton
+    toutSupprimerPushButton = QPushButton
 
     if TYPE_CHECKING:
-        controller: MainController | None
+        __controller: MainController | None
 
     def __init__(self):
         super().__init__()
@@ -246,10 +248,14 @@ class MainWindow(QMainWindow):
         #DockWidget et graph
         self.actionAfficher_graphiques.toggled.connect(self.dock_widget_visibility)
         self.dockWidget.visibilityChanged.connect(self.uncheck_action)
-        # self.ajouterPushButton.clicked.connect(self.ajouter)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Delete:
+            self.__controller.supprimer_balle_liste()
+
 
     def set_controller(self, controller):
-        self.controller = controller
+        self.__controller = controller
         self.pymunk_widget.mouse_moved.connect(controller.on_mouse_move)
         self.pymunk_widget.mouse_pressed.connect(controller.on_mouse_press)
         self.pymunk_widget.mouse_released.connect(controller.on_mouse_release)
@@ -269,7 +275,7 @@ class MainWindow(QMainWindow):
     def on_shoot_released(self):
         self.power_timer.stop()
         if hasattr(self, 'controller'):
-            self.controller.shoot()
+            self.__controller.shoot()
         self.power_accumulation = 0
         self.progressBar.setValue(0)
 
@@ -277,7 +283,7 @@ class MainWindow(QMainWindow):
         self.power_accumulation = min(100, self.power_accumulation + 4)
         self.progressBar.setValue(self.power_accumulation)
         if hasattr(self, 'controller'):
-            self.controller.set_power(self.power_accumulation / 100.0)
+            self.__controller.set_power(self.power_accumulation / 100.0)
 
     """Les deux méthodes ci-dessous servent à toggle le dockWidget"""
 
@@ -286,3 +292,13 @@ class MainWindow(QMainWindow):
 
     def uncheck_action(self,visible):
         self.actionAfficher_graphiques.setChecked(self.dockWidget.isVisible())
+
+    def update_spin_box(self, _):
+        index = self.listView.currentIndex()
+        if not index.isValid():
+            return
+
+        text = index.data(Qt.ItemDataRole.DisplayRole)
+        number = int(text.split()[-1])
+
+        self.balleSpinBox.setValue(number)

@@ -6,6 +6,12 @@ class MainController:
         self.__model = model
         self.__view = view
 
+        # initialisation de la ListView
+        self.__view.listView.setModel(self.__model.getListModel())
+
+        # interaction avec la listView
+        self.__view.listView.selectionModel().selectionChanged.connect(self.__view.update_spin_box)
+
         self.physics_timer = QTimer()
         self.physics_timer.timeout.connect(self.update_physics)
         self.physics_timer.start(16)
@@ -27,14 +33,11 @@ class MainController:
         # self.__view.power_timer.timeout.connect(self.increase_power)
         # self.__view.power_accumulation = 0
 
-        #Todo : fix this
-        # # DockWidget et graph
-        # self.__view.actionAfficher_graphiques.toggled.connect(self.dock_widget_visibility)
-        # self.__view.dockWidget.visibilityChanged.connect(self.uncheck_action)
-        # self.ajouterPushButton.clicked.connect(self.ajou)
 
-        # initialisation de la ListView
-        self.__view.listView.setModel(self.__model.getListModel())
+
+        #dockWidget
+        self.__view.ajouterPushButton.clicked.connect(self.ajouter_balle_liste)
+        self.__view.supprimerPushButton.clicked.connect(self.supprimer_balle_liste)
 
     def update_physics(self):
         self.__model.update(1 / 60.0)
@@ -64,3 +67,9 @@ class MainController:
 
     def shoot(self):
         self.__model.shoot()
+
+    def ajouter_balle_liste(self):
+        self.__model.ajouter_balle_liste(self.__view.balleSpinBox.value())
+
+    def supprimer_balle_liste(self):
+        self.__model.supprimer_balle_liste(self.__view.balleSpinBox.value())
