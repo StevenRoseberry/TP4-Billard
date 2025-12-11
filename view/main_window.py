@@ -2,9 +2,10 @@ import sys
 import math
 from typing import TYPE_CHECKING
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QSizePolicy
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QSizePolicy, QDockWidget, QListView, QPushButton, \
+    QSpinBox
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal, QPointF, QRectF
-from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QRadialGradient, QPainterPath
+from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QRadialGradient, QPainterPath, QAction
 from PyQt6.uic import loadUi
 import pymunk
 
@@ -192,7 +193,22 @@ class PymunkWidget(QWidget):
             self.mouse_released.emit()
 
 
+
+########################################################################
+
+
+
 class MainWindow(QMainWindow):
+
+    #déclaration des éléments Qt du DockWidget
+
+    actionAfficher_graphiques = QAction
+    dockWidget = QDockWidget
+    listView = QListView
+    ajouterPushButton = QPushButton
+    balleSpinBox = QSpinBox
+    supprimerPushButton = QPushButton
+
     def __init__(self):
         super().__init__()
         loadUi('view/ui/main_window.ui', self)
@@ -223,12 +239,19 @@ class MainWindow(QMainWindow):
         self.power_timer.timeout.connect(self.increase_power)
         self.power_accumulation = 0
 
+        #DockWidget et graph
+        self.actionAfficher_graphiques.toggled.connect(self.dock_widget_visibility)
+        self.dockWidget.visibilityChanged.connect(self.uncheck_action)
+        # self.ajouterPushButton.clicked.connect(self.ajou)
+
     def set_controller(self, controller):
         self.controller = controller
         self.pymunk_widget.mouse_moved.connect(controller.on_mouse_move)
         self.pymunk_widget.mouse_pressed.connect(controller.on_mouse_press)
         self.pymunk_widget.mouse_released.connect(controller.on_mouse_release)
         self.pymunk_widget.lock_toggled.connect(controller.on_toggle_lock)
+        #initialisation de la ListView
+        self.listView.setModel(self.controller.getListModel())
 
     def set_model(self, model):
         self.pymunk_widget.w_attr = model.width
@@ -260,3 +283,13 @@ class MainWindow(QMainWindow):
         self.progressBar.setValue(self.power_accumulation)
         if hasattr(self, 'controller'):
             self.controller.set_power(self.power_accumulation / 100.0)
+
+    """Les deux méthodes ci-dessous servent à toggle le dockWidget"""
+
+    def dock_widget_visibility(self):
+        self.dockWidget.setVisible(self.actionAfficher_graphiques.isChecked())
+
+    def uncheck_action(self,visible):
+        if not visible:
+            self.actionAfficher_graphiques.setChecked(visible)
+
