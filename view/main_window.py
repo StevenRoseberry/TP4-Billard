@@ -234,11 +234,11 @@ class MainWindow(QMainWindow):
             layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.graphFrame.setLayout(layout)
 
-        #Todo : voir controller
+        # Todo : voir controller
         # self.createButton.clicked.connect(self.on_reset)
         # self.deleteButton.clicked.connect(self.on_undo)
-        # self.pushButton.pressed.connect(self.on_shoot_pressed)
-        # self.pushButton.released.connect(self.on_shoot_released)
+        self.pushButton.pressed.connect(self.on_shoot_pressed)
+        self.pushButton.released.connect(self.on_shoot_released)
 
         self.progressBar.setValue(0)
         self.power_timer = QTimer()
@@ -274,16 +274,17 @@ class MainWindow(QMainWindow):
 
     def on_shoot_released(self):
         self.power_timer.stop()
-        if hasattr(self, 'controller'):
-            self.__controller.shoot()
+        # if hasattr(self, '__controller'):
+        #     print("pew pew pew")
+        self.__controller.shoot()
         self.power_accumulation = 0
         self.progressBar.setValue(0)
 
     def increase_power(self):
         self.power_accumulation = min(100, self.power_accumulation + 4)
         self.progressBar.setValue(self.power_accumulation)
-        if hasattr(self, 'controller'):
-            self.__controller.set_power(self.power_accumulation / 100.0)
+        # if hasattr(self, '__controller'):
+        self.__controller.set_power(self.power_accumulation / 100.0)
 
     """Les deux méthodes ci-dessous servent à toggle le dockWidget"""
 

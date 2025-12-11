@@ -24,8 +24,8 @@ class MainController:
         self.__view.deleteButton.clicked.connect(self.__model.undo_last_shot)
 
         #Todo : stocker les éléments pymunk dans le model
-        self.__view.pushButton.pressed.connect(self.__view.on_shoot_pressed)
-        self.__view.pushButton.released.connect(self.__view.on_shoot_released)
+        # self.__view.pushButton.pressed.connect(self.__view.on_shoot_pressed)
+        # self.__view.pushButton.released.connect(self.__view.on_shoot_released)
 
         #Todo :fix this
         # self.__view.progressBar.setValue(0)
