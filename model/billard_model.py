@@ -4,6 +4,7 @@ from typing import List, Tuple
 import math
 import random
 from PyQt6.QtCore import QObject
+from model.graph_model import BallsList
 
 
 @dataclass
@@ -24,6 +25,9 @@ class BillardModel(QObject):
         7: (128, 0, 0),
         8: (0, 0, 0),
     }
+
+    #initialisation du QAbstractItemModel
+    tracked_balls_list = BallsList()
 
     def __init__(self, width: int = 1200, height: int = 600):
         super().__init__()
@@ -140,6 +144,9 @@ class BillardModel(QObject):
 
     def update(self, dt: float):
         if not self.is_aiming:
+            
+            self.update_graph()
+
             steps = 2
             for _ in range(steps):
                 self.space.step(dt / steps)
@@ -242,3 +249,14 @@ class BillardModel(QObject):
         end_x = start_x - self.cue_length * math.cos(self.cue_angle)
         end_y = start_y - self.cue_length * math.sin(self.cue_angle)
         return ((start_x, start_y), (end_x, end_y))
+
+    """Graph et liste de balle"""
+
+    def add_ball(self,number):
+        self.tracked_balls_list.add_item(number)
+    
+    def update_graph(self):
+        print("hello list")
+
+    def getListModel(self):
+        return self.tracked_balls_list
