@@ -65,14 +65,20 @@ class BillardModel(QObject):
         static_body = self.space.static_body
         thickness = 40
         hole = 120
-        tri_margin = hole - thickness/2
-        spacer = thickness/2
+        half_width = int(self.width / 2 - hole * 0.75)
+
+        # pour les triangles
+        spacer = thickness / 2
+        tri_margin = hole - spacer
+        mid_tri = half_width + spacer
 
         #walls
         self._add_wall((20, hole), (20, self.height - hole), thickness)
         self._add_wall((self.width - 20, hole), (self.width - 20, self.height - hole), thickness)
-        self._add_wall((hole, 20), (self.width - hole, 20), thickness)
-        self._add_wall((hole, self.height - 20), (self.width - hole, self.height - 20), thickness)
+        self._add_wall((hole, 20), (half_width, 20), thickness)
+        self._add_wall((hole, self.height - 20), (half_width, self.height - 20), thickness)
+        self._add_wall((self.width - hole, self.height - 20), (self.width - half_width, self.height - 20), thickness)
+        self._add_wall((self.width - hole, 20), (self.width - half_width, 20), thickness)
         #triangle
         """Liste des triangles à dessiner
                     Par Maxime grondin (j'en suis fier)
@@ -93,6 +99,10 @@ class BillardModel(QObject):
             [(self.width - tri_margin, spacer), 1, 1],
             [(self.width - tri_margin, self.height - spacer), 1, -1],
             # poches du milieu
+            [(mid_tri, self.height - spacer), 1, -1],
+            [(self.width - mid_tri, self.height - spacer), -1, -1],
+            [(mid_tri, spacer), 1, 1],
+            [(self.width - mid_tri, spacer), -1, 1],
         ]
         self._add_tiangle(liste_triangle_rectangle,thickness)
 

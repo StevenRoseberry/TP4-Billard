@@ -80,17 +80,25 @@ class PymunkWidget(QWidget):
 
         margin = 40
         hole = margin * 3
+        half_width = int(self.width() / 2 - hole * 0.75)
+
         #pour les triangles
         spacer = margin/2
         tri_margin = hole - spacer
+        mid_tri = half_width + spacer
+
 
         #Murs verticaux
         painter.drawLine(margin, hole, margin, self.height() - hole)
         painter.drawLine(self.width() - margin, hole, self.width() - margin, self.height() - hole)
 
         #Murs horisontaux
-        painter.drawLine(hole, margin, self.width() - hole, margin)
-        painter.drawLine(hole, self.height() - margin, self.width() - hole, self.height() - margin)
+
+
+        painter.drawLine(hole, margin, half_width, margin)
+        painter.drawLine(hole, self.height() - margin, half_width, self.height() - margin)
+        painter.drawLine(self.width() - hole, margin, self.width() - half_width, margin)
+        painter.drawLine(self.width() - hole, self.height() - margin, self.width() - half_width, self.height() - margin)
 
 
 
@@ -100,7 +108,7 @@ class PymunkWidget(QWidget):
             Pour générer un triangle rectangle isocèle, il faut ajouter à la liste (liste_triangle_rectangle)
             [(x de l'origine,y de l'origine), +/- 1, +/- 1]
             
-            le +/- 1 dit à la boucle dans quelle axe les deux cathètes seront dessinées
+            les +/- 1 dit à la boucle dans quelles axes les deux cathètes seront dessinées
         """
 
 
@@ -120,6 +128,10 @@ class PymunkWidget(QWidget):
                                     [(self.width() - tri_margin, spacer), 1, 1],
                                     [(self.width() - tri_margin, self.height() - spacer), 1, -1],
                                     #poches du milieu
+                                    [(mid_tri, self.height() - spacer), 1, -1],
+                                    [(self.width() - mid_tri, self.height() - spacer), -1, -1],
+                                    [(mid_tri, spacer), 1, 1],
+                                    [(self.width() - mid_tri, spacer), -1, 1],
                                     ]
 
         for coor in liste_triangle_rectangle:
