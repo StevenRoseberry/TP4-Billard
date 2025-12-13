@@ -36,3 +36,13 @@ if __name__ == '__main__':
         Bonne nouvelle!!!!!!! Julien a dit qu'on est pas obliger de séparer la physique du jeu du modele alors le pymunk peut être entièrement dans la vue
         il fait ca pour nous simplifier la vie
         """
+
+    """
+    CE QUE J'AI MODIFIÉ :
+
+    1. J'ai déplacé toute la physique (Pymunk) directement dans la Vue (PymunkWidget). C'est maintenant elle qui gère la boucle de jeu et les collisions, ce qui évite les problèmes de synchro.
+
+    2. J'ai nettoyé le Modèle (BillardModel) : il ne contient plus aucune physique, il sert juste à stocker la liste des balles pour le graphique.
+
+    3. J'ai simplifié le Contrôleur : il ne fait plus de calculs, il se contente de dire à la Vue de "Tirer" ou de "Reset" quand on clique sur les boutons.
+    """
